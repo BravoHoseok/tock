@@ -510,11 +510,15 @@ pub trait Process {
     /// Opposite of `enter_grant()`. Used to signal that the grant is no longer
     /// entered.
     ///
-    /// If `grant_num` is valid, this function cannot fail. If `grant_num` is
-    /// invalid, this function will do nothing. If the process is inactive then
-    /// grants are invalid and are not entered or not entered, and this function
-    /// will do nothing.
-    fn leave_grant(&self, grant_num: usize);
+    /// This function accepts a `EnteredGrantKernelManagedLayout` as its lone argument,
+    /// and leaves the grant associated with that layout. If the associated process is
+    /// inactive then the grant is invalid and this function will do nothing. This method
+    /// is unsafe to call except for within the `Drop` implementation of
+    /// `EnteredGrantKernelManagedLayout`
+    unsafe fn leave_grant<'a>(
+        &self,
+        layout: &mut crate::grant::EnteredGrantKernelManagedLayout<'a>,
+    );
 
     /// Return the count of the number of allocated grant pointers if the
     /// process is active. This does not count custom grants. This is used

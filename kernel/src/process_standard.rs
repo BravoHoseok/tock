@@ -868,7 +868,11 @@ impl<C: Chip> Process for ProcessStandard<'_, C> {
         Ok(custom_grant_address as *mut u8)
     }
 
-    fn leave_grant(&self, grant_num: usize) {
+    unsafe fn leave_grant<'a>(
+        &self,
+        layout: &mut crate::grant::EnteredGrantKernelManagedLayout<'a>,
+    ) {
+        let grant_num = layout.grant_num;
         // Do not modify an inactive process.
         if !self.is_active() {
             return;

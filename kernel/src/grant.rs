@@ -219,13 +219,13 @@ impl<const NUM: u8> AllowRwSize for AllowRwCount<NUM> {
 /// leave the grant. This protects against calling `grant.enter()` without
 /// calling the corresponding `grant.leave()`, perhaps due to accidentally using
 /// the `?` operator.
-struct EnteredGrantKernelManagedLayout<'a> {
+pub struct EnteredGrantKernelManagedLayout<'a> {
     /// Leaving a grant is handled through the process implementation, so must
     /// keep a reference to the relevant process.
     process: &'a dyn Process,
     /// The grant number of the entered grant that we want to ensure we leave
     /// properly.
-    grant_num: usize,
+    pub(crate) grant_num: usize,
 
     /// The location of the counters structure for the grant.
     counters_ptr: *mut usize,
@@ -483,7 +483,11 @@ impl<'a> EnteredGrantKernelManagedLayout<'a> {
 // Ensure that we leave the grant once this goes out of scope.
 impl Drop for EnteredGrantKernelManagedLayout<'_> {
     fn drop(&mut self) {
-        self.process.leave_grant(self.grant_num);
+        // SAFETY: This Drop implementation is documented as the only place it is safe to call
+        // this function.
+        unsafe {
+            self.process.leave_grant(self);
+        }
     }
 }
 
